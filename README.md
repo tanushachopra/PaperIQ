@@ -3,6 +3,10 @@
 
 ---
 
+## Live Demo - https://paperiq-yfjsc7rkpmtdsxiag3azkf.streamlit.app/
+
+---
+
 ## 📌 What is PaperIQ?
 
 PaperIQ is a machine learning powered web application that lets you
