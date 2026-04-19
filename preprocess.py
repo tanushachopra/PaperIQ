@@ -21,6 +21,7 @@ def load_data(filepath: str) -> pd.DataFrame:
             f"Dataset not found at '{filepath}'.\n"
             "Please place your CSV file inside the 'data/' folder."
         )
+    
     df = pd.read_csv(filepath)
     print(f"✅ Dataset loaded: {df.shape[0]} rows, {df.shape[1]} columns")
     print(f"   Columns found: {list(df.columns)}\n")

@@ -1,4 +1,20 @@
 # app.py  —  v2: polished Research Paper Exploration Dashboard
+import os
+import gdown
+
+# Create folders if not exist
+os.makedirs("data", exist_ok=True)
+os.makedirs("models", exist_ok=True)
+
+def download_file(file_id, output):
+    if not os.path.exists(output):
+        url = f"https://drive.google.com/uc?id={file_id}"
+        gdown.download(url, output, quiet=False)
+
+# Download files
+download_file("18mA5Rw0uhQL5FFvymOz5_-CaC-JqLemc", "data/cleaned_papers.csv")
+download_file("1N2_YVEGDScL6CXuQ7xgodDB7KbU2YQjp", "models/vectors.pkl")
+download_file("1ZwKSxajZJQDgOynjHaLG3OCmu4XL-L-O", "models/final.pkl")
 
 import streamlit as st
 import pandas as pd
