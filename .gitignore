@@ -1,0 +1,12 @@
+# Large data files — too big for GitHub
+data/papers.csv
+data/cleaned_papers.csv
+
+# Large model files — too big for GitHub
+models/vectors.pkl
+models/final.pkl
+
+# Python cache
+__pycache__/
+*.pyc
+.env
