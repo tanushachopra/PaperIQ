@@ -1,28 +1,37 @@
 # app.py  —  v2: polished Research Paper Exploration Dashboard
-from modules.research_copilot.copilot_ui import render_copilot_page
+# app.py — PaperIQ Complete
+
 import os
-
-
-# Create folders if not exist
-os.makedirs("data", exist_ok=True)
-os.makedirs("models", exist_ok=True)
-
-def download_file(file_id, output):
-    if not os.path.exists(output):
-        url = f"https://drive.google.com/uc?id={file_id}"
-        
-
-# Download files
-download_file("18mA5Rw0uhQL5FFvymOz5_-CaC-JqLemc", "data/cleaned_papers.csv")
-download_file("1N2_YVEGDScL6CXuQ7xgodDB7KbU2YQjp", "models/vectors.pkl")
-download_file("1ZwKSxajZJQDgOynjHaLG3OCmu4XL-L-O", "models/final.pkl")
-
 import streamlit as st
 import pandas as pd
 import altair as alt
+import gdown
 
+from modules.research_copilot.copilot_ui import render_copilot_page
 from recommender import load_model_artifacts, get_recommendations, search_by_description
 from utils.helpers import inject_global_css, show_paper_card, credit_footer
+
+# ══════════════════════════════════════════════════════════════════════════════
+# DOWNLOAD LARGE FILES FROM GOOGLE DRIVE
+# ══════════════════════════════════════════════════════════════════════════════
+
+os.makedirs("data",   exist_ok=True)
+os.makedirs("models", exist_ok=True)
+
+def download_file(file_id: str, output: str):
+    """Download file from Google Drive if not already present."""
+    if not os.path.exists(output):
+        url = f"https://drive.google.com/uc?id={file_id}"
+        print(f"Downloading {output}...")
+        gdown.download(url, output, quiet=False)
+        print(f"✅ Downloaded {output}")
+    else:
+        print(f"✅ Already exists: {output}")
+
+# Download all large files
+download_file("18mA5Rw0uhQL5FFvymOz5_-CaC-JqLemc", "data/cleaned_papers.csv")
+download_file("1N2_YVEGDScL6CXuQ7xgodDB7KbU2YQjp",  "models/vectors.pkl")
+download_file("1ZwKSxajZJQDgOynjHaLG3OCmu4XL-L-O",  "models/final.pkl")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE CONFIG
@@ -30,13 +39,12 @@ from utils.helpers import inject_global_css, show_paper_card, credit_footer
 
 st.set_page_config(
     page_title="PaperIQ",
-    page_icon="🔬",
+    page_icon="🧠",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-inject_global_css()   # ← apply all CSS
-
+inject_global_css()
 
 # ══════════════════════════════════════════════════════════════════════════════
 # LOAD MODEL ARTIFACTS
@@ -48,15 +56,14 @@ def load_artifacts():
 
 vectorizer, tfidf_matrix, metadata = load_artifacts()
 
-
 # ══════════════════════════════════════════════════════════════════════════════
-# ALTAIR THEME HELPER  (dark background charts)
+# ALTAIR THEME
 # ══════════════════════════════════════════════════════════════════════════════
 
 CHART_CONFIG = {
     "config": {
-        "background":   "#13132a",
-        "view":         {"stroke": "transparent"},
+        "background": "#13132a",
+        "view":       {"stroke": "transparent"},
         "axis": {
             "domainColor": "#3a3a5c",
             "gridColor":   "#1e1e38",
@@ -67,9 +74,9 @@ CHART_CONFIG = {
             "titleFont":   "Inter",
         },
         "legend": {
-            "labelColor":  "#b0b0d0",
-            "titleColor":  "#c0c0e0",
-            "labelFont":   "Inter",
+            "labelColor": "#b0b0d0",
+            "titleColor": "#c0c0e0",
+            "labelFont":  "Inter",
         },
         "title": {"color": "#d0c4ff", "font": "Inter", "fontSize": 15},
     }
@@ -78,43 +85,44 @@ CHART_CONFIG = {
 def themed(chart):
     return chart.configure(**CHART_CONFIG["config"])
 
-
 # ══════════════════════════════════════════════════════════════════════════════
 # SIDEBAR
 # ══════════════════════════════════════════════════════════════════════════════
 
 with st.sidebar:
     st.markdown(
-        "<div style='font-size:2.4rem;margin-bottom:4px'>🔬</div>"
-        "<div style='font-size:1.4rem;font-weight:700;color:#c8b8ff'>"
-        "Research Explorer</div>",
+        "<div style='font-size:2.8rem;margin-bottom:2px'>🧠</div>"
+        "<div style='font-size:2rem;font-weight:800;color:#c8b8ff;"
+        "letter-spacing:0.04em;line-height:1.2'>PaperIQ</div>"
+        "<div style='font-size:0.75rem;color:#6c63ff;font-weight:500;"
+        "letter-spacing:0.12em;text-transform:uppercase;margin-top:4px'>"
+        "Research Intelligence</div>",
         unsafe_allow_html=True,
     )
     st.markdown("---")
 
-    
     page = st.radio(
-    "Navigate to",
-    options=[
-        "🏠 Home",
-        "🤖 Recommender",
-        "📈 Trend Analysis",
-        "🔍 Search",
-        "🧭 Research Copilot",    # ← add this
-    ],
-)
+        "Navigate to",
+        options=[
+            "🏠 Home",
+            "🤖 Recommender",
+            "📈 Trend Analysis",
+            "🔍 Search",
+            "🧭 Research Copilot",
+        ],
+    )
 
     st.markdown("---")
     st.markdown(
-    "<div style='font-size:2.8rem;margin-bottom:2px'>🧠</div>"
-    "<div style='font-size:2rem;font-weight:800;color:#c8b8ff;"
-    "letter-spacing:0.04em;line-height:1.2'>PaperIQ</div>"
-    "<div style='font-size:0.75rem;color:#6c63ff;font-weight:500;"
-    "letter-spacing:0.12em;text-transform:uppercase;margin-top:4px'>"
-    "Research Intelligence</div>",
-    unsafe_allow_html=True,
-)
-    
+        f"""
+        <div style='font-size:0.82rem;color:#7878a0;line-height:2'>
+        📄 <b style='color:#c8b8ff'>{len(metadata):,}</b> papers loaded<br>
+        🏷️ <b style='color:#c8b8ff'>{metadata['category'].nunique()}</b> categories<br>
+        📅 <b style='color:#c8b8ff'>{int(metadata['year'].min())} – {int(metadata['year'].max())}</b>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE 1 — HOME
@@ -123,26 +131,25 @@ with st.sidebar:
 if page == "🏠 Home":
 
     st.markdown(
-    "<div style='font-size:3.8rem;font-weight:900;color:#c8b8ff;"
-    "letter-spacing:0.04em;line-height:1.1;margin-bottom:8px'>🧠 PaperIQ</div>"
-    "<div style='font-size:1.15rem;color:#8888aa;font-weight:400;"
-    "letter-spacing:0.02em;margin-bottom:1.5rem'>"
-    "Discover, compare, and analyze 136K+ research papers — powered by TF-IDF & Cosine Similarity."
-    "</div>",
-    unsafe_allow_html=True,
-)
+        "<div style='font-size:3.8rem;font-weight:900;color:#c8b8ff;"
+        "letter-spacing:0.04em;line-height:1.1;margin-bottom:8px'>🧠 PaperIQ</div>"
+        "<div style='font-size:1.15rem;color:#8888aa;font-weight:400;"
+        "letter-spacing:0.02em;margin-bottom:1.5rem'>"
+        "Discover, compare, and analyze 136K+ research papers — "
+        "powered by TF-IDF & Cosine Similarity."
+        "</div>",
+        unsafe_allow_html=True,
+    )
     st.markdown("---")
 
-    # ── Metrics ────────────────────────────────────────────────────────────────
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("📄 Total Papers",   f"{len(metadata):,}")
-    c2.metric("🏷️ Categories",     metadata["category"].nunique())
-    c3.metric("📅 Earliest Year",  int(metadata["year"].min()))
-    c4.metric("📅 Latest Year",    int(metadata["year"].max()))
+    c1.metric("📄 Total Papers",  f"{len(metadata):,}")
+    c2.metric("🏷️ Categories",    metadata["category"].nunique())
+    c3.metric("📅 Earliest Year", int(metadata["year"].min()))
+    c4.metric("📅 Latest Year",   int(metadata["year"].max()))
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ── Feature cards ──────────────────────────────────────────────────────────
     st.markdown("#### 🧭 What can you do here?")
     f1, f2, f3 = st.columns(3)
     with f1:
@@ -153,8 +160,6 @@ if page == "🏠 Home":
         st.warning("### 🔍 Search\nDescribe a topic in **plain English** and let the app surface the most relevant papers.")
 
     st.markdown("---")
-
-    # ── Dataset Preview ────────────────────────────────────────────────────────
     st.markdown("#### 📋 Dataset Preview")
     st.dataframe(
         metadata[["title", "category", "year"]].head(10),
@@ -163,8 +168,6 @@ if page == "🏠 Home":
     )
 
     st.markdown("---")
-
-    # ── FIX: Top 20 categories chart (avoid 138-bar clutter) ──────────────────
     st.markdown("#### 🏷️ Top 20 Categories by Paper Count")
 
     top20 = (
@@ -179,18 +182,13 @@ if page == "🏠 Home":
         alt.Chart(top20)
         .mark_bar(cornerRadiusTopRight=5, cornerRadiusBottomRight=5)
         .encode(
-            y=alt.Y("category:N",
-                    sort="-x",
-                    title=None,
+            y=alt.Y("category:N", sort="-x", title=None,
                     axis=alt.Axis(labelLimit=200, labelFontSize=12)),
-            x=alt.X("count:Q",
-                    title="Number of Papers",
+            x=alt.X("count:Q", title="Number of Papers",
                     axis=alt.Axis(labelFontSize=11)),
-            color=alt.Color(
-                "count:Q",
-                scale=alt.Scale(scheme="purpleblue"),
-                legend=None,
-            ),
+            color=alt.Color("count:Q",
+                            scale=alt.Scale(scheme="purpleblue"),
+                            legend=None),
             tooltip=[
                 alt.Tooltip("category:N", title="Category"),
                 alt.Tooltip("count:Q",    title="Papers"),
@@ -198,11 +196,7 @@ if page == "🏠 Home":
         )
         .properties(height=520, title="Top 20 Research Categories")
     )
-
-    st.altair_chart(
-        themed(bar),
-        use_container_width=True,
-    )
+    st.altair_chart(themed(bar), use_container_width=True)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -214,11 +208,18 @@ elif page == "🤖 Recommender":
     st.markdown(
         "<div class='page-title'>🤖 Paper Recommender</div>"
         "<div class='page-subtitle'>"
-        "Select a paper and discover the most similar ones using cosine similarity on TF-IDF vectors."
+        "Select a paper and discover the most similar ones using "
+        "cosine similarity on TF-IDF vectors."
         "</div>",
         unsafe_allow_html=True,
     )
     st.markdown("---")
+
+    # session state fix
+    if "rec_results"     not in st.session_state:
+        st.session_state.rec_results     = None
+    if "rec_paper_title" not in st.session_state:
+        st.session_state.rec_paper_title = None
 
     col1, col2 = st.columns([0.78, 0.22])
     with col1:
@@ -230,7 +231,10 @@ elif page == "🤖 Recommender":
     with col2:
         top_n = st.slider("Top N Results", 3, 15, 5)
 
-    # Selected paper info
+    if selected_paper != st.session_state.rec_paper_title:
+        st.session_state.rec_results     = None
+        st.session_state.rec_paper_title = selected_paper
+
     selected_row = metadata[metadata["title"] == selected_paper].iloc[0]
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -267,10 +271,12 @@ elif page == "🤖 Recommender":
 
     if st.button("🔍 Get Recommendations", type="primary"):
         with st.spinner("Computing similarity scores..."):
-            recs = get_recommendations(
+            st.session_state.rec_results = get_recommendations(
                 selected_paper, metadata, tfidf_matrix, top_n=top_n
             )
 
+    if st.session_state.rec_results is not None:
+        recs = st.session_state.rec_results
         if recs.empty:
             st.error("No recommendations found. Try a different paper.")
         else:
@@ -299,7 +305,8 @@ elif page == "📈 Trend Analysis":
     st.markdown(
         "<div class='page-title'>📈 Publication Trend Analysis</div>"
         "<div class='page-subtitle'>"
-        "How has research evolved over the years? Explore output by year and category."
+        "How has research evolved over the years? "
+        "Explore output by year and category."
         "</div>",
         unsafe_allow_html=True,
     )
@@ -318,8 +325,6 @@ elif page == "📈 Trend Analysis":
     df_trend["year"] = df_trend["year"].dropna().astype(int)
 
     st.markdown("---")
-
-    # ── Chart 1: Papers per year (line) ───────────────────────────────────────
     st.markdown("#### 📊 Total Papers Published per Year")
 
     yearly = df_trend.groupby("year").size().reset_index(name="count")
@@ -348,22 +353,20 @@ elif page == "📈 Trend Analysis":
         )
         .properties(height=320, title="Research Output Over Time")
     )
-
     st.altair_chart(themed(area), use_container_width=True)
 
     peak_year  = int(yearly.loc[yearly["count"].idxmax(), "year"])
     peak_count = int(yearly["count"].max())
-    st.info(f"📌 **Peak year:** **{peak_year}** with **{peak_count:,}** papers published.")
+    st.info(
+        f"📌 **Peak year:** **{peak_year}** with "
+        f"**{peak_count:,}** papers published."
+    )
 
     st.markdown("---")
-
-    # ── Chart 2: Category breakdown (top 10 only to avoid clutter) ────────────
     st.markdown("#### 🏷️ Top 10 Categories Over Time")
 
-    top10_cats = (
-        df_trend["category"].value_counts().head(10).index.tolist()
-    )
-    df_top = df_trend[df_trend["category"].isin(top10_cats)]
+    top10_cats = df_trend["category"].value_counts().head(10).index.tolist()
+    df_top     = df_trend[df_trend["category"].isin(top10_cats)]
     cat_yearly = (
         df_top.groupby(["year", "category"])
         .size()
@@ -377,25 +380,21 @@ elif page == "📈 Trend Analysis":
             x=alt.X("year:O", title="Year",
                     axis=alt.Axis(labelAngle=-45)),
             y=alt.Y("count:Q", title="Papers", stack="zero"),
-            color=alt.Color(
-                "category:N",
-                scale=alt.Scale(scheme="tableau10"),
-                title="Category",
-            ),
+            color=alt.Color("category:N",
+                            scale=alt.Scale(scheme="tableau10"),
+                            title="Category"),
             tooltip=[
                 alt.Tooltip("year:O",     title="Year"),
                 alt.Tooltip("category:N", title="Category"),
                 alt.Tooltip("count:Q",    title="Papers"),
             ],
         )
-        .properties(height=380, title="Category Breakdown per Year (Top 10)")
+        .properties(height=380,
+                    title="Category Breakdown per Year (Top 10)")
     )
-
     st.altair_chart(themed(stacked), use_container_width=True)
 
     st.markdown("---")
-
-    # ── Chart 3: Top 15 categories horizontal bar ──────────────────────────────
     st.markdown("#### 🏆 Top 15 Categories — All Time")
 
     top15 = (
@@ -413,19 +412,17 @@ elif page == "📈 Trend Analysis":
             y=alt.Y("category:N", sort="-x", title=None,
                     axis=alt.Axis(labelLimit=220, labelFontSize=12)),
             x=alt.X("count:Q", title="Papers"),
-            color=alt.Color(
-                "count:Q",
-                scale=alt.Scale(scheme="purples"),
-                legend=None,
-            ),
+            color=alt.Color("count:Q",
+                            scale=alt.Scale(scheme="purples"),
+                            legend=None),
             tooltip=[
                 alt.Tooltip("category:N", title="Category"),
                 alt.Tooltip("count:Q",    title="Papers"),
             ],
         )
-        .properties(height=420, title="Top 15 Categories by Total Papers")
+        .properties(height=420,
+                    title="Top 15 Categories by Total Papers")
     )
-
     st.altair_chart(themed(horiz), use_container_width=True)
 
 
@@ -438,7 +435,8 @@ elif page == "🔍 Search":
     st.markdown(
         "<div class='page-title'>🔍 Description-Based Search</div>"
         "<div class='page-subtitle'>"
-        "Describe any research topic in plain English — we'll find the most relevant papers."
+        "Describe any research topic in plain English — "
+        "we'll find the most relevant papers."
         "</div>",
         unsafe_allow_html=True,
     )
@@ -446,13 +444,15 @@ elif page == "🔍 Search":
 
     query = st.text_area(
         "📝 Describe what you're looking for",
-        placeholder="e.g.  deep learning methods for medical image segmentation using CNNs",
+        placeholder="e.g. deep learning methods for medical "
+                    "image segmentation using CNNs",
         height=110,
     )
 
     col1, col2 = st.columns([0.75, 0.25])
     with col2:
-        top_n = st.slider("Top N Results", 3, 15, 5, key="search_slider")
+        top_n = st.slider("Top N Results", 3, 15, 5,
+                          key="search_slider")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -462,19 +462,21 @@ elif page == "🔍 Search":
         else:
             with st.spinner("Scanning 136K+ papers..."):
                 results = search_by_description(
-                    query, vectorizer, tfidf_matrix, metadata, top_n=top_n
+                    query, vectorizer, tfidf_matrix,
+                    metadata, top_n=top_n
                 )
-
             if results.empty:
-                st.error("No results found. Try rephrasing your description.")
+                st.error("No results found. Try rephrasing.")
             else:
                 st.markdown(
                     f"<div style='color:#4ecca3;font-weight:600;"
-                    f"margin-bottom:12px'>✅ Top {len(results)} papers matching "
-                    f"your description</div>",
+                    f"margin-bottom:12px'>✅ Top {len(results)} papers "
+                    f"matching your description</div>",
                     unsafe_allow_html=True,
                 )
-                for rank, (_, row) in enumerate(results.iterrows(), start=1):
+                for rank, (_, row) in enumerate(
+                    results.iterrows(), start=1
+                ):
                     show_paper_card(row, rank=rank)
     else:
         st.markdown(
@@ -482,6 +484,12 @@ elif page == "🔍 Search":
             "👆 Describe a topic above and press Search.</div>",
             unsafe_allow_html=True,
         )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE 5 — RESEARCH COPILOT
+# ══════════════════════════════════════════════════════════════════════════════
+
 elif page == "🧭 Research Copilot":
     render_copilot_page()
 
