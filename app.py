@@ -1,7 +1,7 @@
 # app.py  —  v2: polished Research Paper Exploration Dashboard
 from modules.research_copilot.copilot_ui import render_copilot_page
 import os
-import gdown
+
 
 # Create folders if not exist
 os.makedirs("data", exist_ok=True)
