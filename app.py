@@ -10,7 +10,7 @@ os.makedirs("models", exist_ok=True)
 def download_file(file_id, output):
     if not os.path.exists(output):
         url = f"https://drive.google.com/uc?id={file_id}"
-        gdown.download(url, output, quiet=False)
+        
 
 # Download files
 download_file("18mA5Rw0uhQL5FFvymOz5_-CaC-JqLemc", "data/cleaned_papers.csv")
