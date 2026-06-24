@@ -1,4 +1,5 @@
 # app.py  —  v2: polished Research Paper Exploration Dashboard
+from modules.research_copilot.copilot_ui import render_copilot_page
 import os
 import gdown
 
@@ -91,11 +92,17 @@ with st.sidebar:
     )
     st.markdown("---")
 
+    
     page = st.radio(
-        "Navigate to",
-        options=["🏠 Home", "🤖 Recommender", "📈 Trend Analysis", "🔍 Search"],
-        index=0,
-    )
+    "Navigate to",
+    options=[
+        "🏠 Home",
+        "🤖 Recommender",
+        "📈 Trend Analysis",
+        "🔍 Search",
+        "🧭 Research Copilot",    # ← add this
+    ],
+)
 
     st.markdown("---")
     st.markdown(
@@ -107,6 +114,7 @@ with st.sidebar:
     "Research Intelligence</div>",
     unsafe_allow_html=True,
 )
+    
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE 1 — HOME
@@ -474,6 +482,8 @@ elif page == "🔍 Search":
             "👆 Describe a topic above and press Search.</div>",
             unsafe_allow_html=True,
         )
+elif page == "🧭 Research Copilot":
+    render_copilot_page()
 
 
 # ══════════════════════════════════════════════════════════════════════════════
